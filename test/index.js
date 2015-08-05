@@ -10,7 +10,7 @@ describe('@selenium-drivex@', function () {
     before(function (done) {
 
         driver = new webdriver.Builder()
-          .forBrowser('chrome')
+          .forBrowser(process.env.DRIVEX_BROWSER || 'phantomjs')
           .build();
         drivex = Drivex(driver, webdriver);
         done();
