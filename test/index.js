@@ -1,20 +1,43 @@
 'use strict';
 var Drivex = require('../');
 var webdriver = require('selenium-webdriver');
+var assert = require('assert');
 var By = webdriver.By;
-var until = webdriver.until;
+var drivex;
+var driver;
 
-var driver = new webdriver.Builder()
-  .forBrowser('chrome')
-  .build();
+describe('@selenium-drivex@', function () {
+    before(function (done) {
+
+        driver = new webdriver.Builder()
+          .forBrowser('chrome')
+          .build();
+        drivex = Drivex(driver, webdriver);
+        done();
+
+
+    });
+    after(function (done) {
+        driver.quit();
+        done();
+
+    });
+    it('should @work@', function (done) {
+        driver.get('http://localhost:8008');
+        driver.sleep(1000);
+        drivex.find(by({'locator': 'foo_text', 'type': 'name'})).sendKeys('webdriver');
+        drivex.find(by({'locator': '[data-fortext=foo_text]', 'type': 'css'})).click();
+        drivex.find(by({locator: '#outy', type: 'css'})).getText()
+          .then(function (text) {
+              assert.equal(text, 'webdriver');
+              done();
+          }, function (err) {
+              done(err);
+          });
+    });
+});
+
 function by(locator) {
-  return By[locator.type](locator.locator);
+    return By[locator.type](locator.locator);
 }
-var drivex = Drivex(driver, webdriver);
-driver.get('http://www.google.com/ncr');
-//drivex.visible(by({'locator': 'blerg', 'type': 'css'}));
-drivex.find(by({'locator': 'q', 'type': 'name'})).sendKeys('webdriver');
-drivex.find(by({'locator': 'btnG', 'type': 'name'})).click();
-drivex.waitForElementVisible(by({'locator': 'Selenium WebDriver', 'type': 'linkText'}), 6000, 'didnt find it');
-//driver.wait(until.titleIs('webdriver - Google Search'), 1000).then(function() {console.log('received correct page title')});
-driver.quit();
+

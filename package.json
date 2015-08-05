@@ -4,7 +4,7 @@
   "description": "selenium-webdriver abstraction methods",
   "main": "index.js",
   "scripts": {
-    "test": "node test/index.js"
+    "test": "mocha --timeout 60s"
   },
   "repository": {
     "type": "git",
@@ -39,7 +39,8 @@
     "debug": "^2.1.2"
   },
   "devDependencies": {
-    "selenium-webdriver": "~2.44.0",
-    "selenium-reference-webapp": "https://github.com/grawk/selenium-reference-webapp#master"
+    "mocha": "^2.2.5",
+    "selenium-reference-webapp": "https://github.com/grawk/selenium-reference-webapp#master",
+    "selenium-webdriver": "~2.44.0"
   }
 }
