@@ -39,6 +39,7 @@
     "debug": "^2.1.2"
   },
   "devDependencies": {
-    "selenium-webdriver": "~2.44.0"
+    "selenium-webdriver": "~2.44.0",
+    "selenium-reference-webapp": "https://github.com/grawk/selenium-reference-webapp#master"
   }
 }
