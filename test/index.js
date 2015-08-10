@@ -23,7 +23,7 @@ describe('@selenium-drivex@', function () {
 
     });
     it('should @work@', function (done) {
-        driver.get('http://0.0.0.0:3000');
+        driver.get('http://172.17.0.209:3000');
         driver.sleep(1000);
         drivex.find(by({'locator': 'foo_text', 'type': 'name'})).sendKeys('webdriver');
         drivex.find(by({'locator': '[data-fortext=foo_text]', 'type': 'css'})).click();
