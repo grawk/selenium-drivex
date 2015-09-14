@@ -5,6 +5,7 @@ var async = require('async');
 module.exports = function drivex(driver, wd) {
   var methods = {
     find: function (locator, el) {
+      log('find', locator);
       return (el ? el : driver).findElement(locator);
     },
     /**
@@ -23,6 +24,7 @@ module.exports = function drivex(driver, wd) {
      * @returns {Promise} resolves to true or rejected
      */
     present: function (locator, el) {
+      log('present', locator);
       return (el ? el : driver).isElementPresent(locator);
     },
     /**
@@ -77,22 +79,25 @@ module.exports = function drivex(driver, wd) {
      * @returns {Promise} resolves to true or throw error
      */
     waitForElementVisible: function (locator, timeout, msg) {
-
       log('waitForElementVisible', locator);
-      return driver.wait(function () {
+      driver.wait(function () {
+        log('waitForElementVisible:present', locator);
         return methods.present(locator);
-      }, timeout, msg).then(function () {
-        driver.wait(function () {
-          return methods.visible(locator);
-        }, timeout, msg)
-      }).then(function (isVisible) {
-        log('waitForElementVisible: ' + isVisible, locator);
-        return methods.find(locator);
-      }, function (err) {
-        log('waitForElementVisible', err);
-        log(err.stack);
-        throw new Error(msg || '[drivex.waitForElementVisible] Element not visible');
-      });
+      }, timeout, msg).
+          thenCatch(function (err) {
+            throw new Error(msg || '[drivex.waitForElementVisible] Element not present');
+          });
+      driver.wait(function () {
+        log('waitForElementVisible:visible', locator);
+        return methods.visible(locator);
+      }, timeout, msg).
+          thenCatch(function (err) {
+            throw new Error(msg || '[drivex.waitForElementVisible] Element not visible');
+          });
+      return methods.find(locator).
+          thenCatch(function (err) {
+            throw new Error(msg || '[drivex.waitForElementVisible] Element not found');
+          });
     },
     /**
      * Wait for timeout milliseconds for the WebElement to be visible
@@ -124,25 +129,25 @@ module.exports = function drivex(driver, wd) {
           var total = elts.length;
           var found = false;
           async.whilst(
-            function () {
-              return current < total;
-            },
-            function (callback) {
-              var elt = elts[current++];
-              elt.getText().then(function (txt) {
-                if (txt === optionText) {
-                  found = elt;
+              function () {
+                return current < total;
+              },
+              function (callback) {
+                var elt = elts[current++];
+                elt.getText().then(function (txt) {
+                  if (txt === optionText) {
+                    found = elt;
+                  }
+                  callback();
+                });
+              },
+              function (err) {
+                if (found !== false) {
+                  d.fulfill(found.click());
+                } else {
+                  d.reject(new Error('couldn\'t find option with text: ' + optionText));
                 }
-                callback();
-              });
-            },
-            function (err) {
-              if (found !== false) {
-                d.fulfill(found.click());
-              } else {
-                d.reject(new Error('couldn\'t find option with text: ' + optionText));
               }
-            }
           );
         });
       });
@@ -175,22 +180,22 @@ module.exports = function drivex(driver, wd) {
     firstVisible: function (locatorObject, timeout) {
       var keyFound;
       var elementTests = [];
-      Object.keys(locatorObject).forEach(function(key) {
+      Object.keys(locatorObject).forEach(function (key) {
         var loc = locatorObject[key];
-        elementTests.push(function() {
-          return methods.waitForElementVisible(loc, 100).then(function() {
+        elementTests.push(function () {
+          return methods.waitForElementVisible(loc, 100).then(function () {
             keyFound = key;
             return true;
-          }, function(err) {
+          }, function (err) {
             return false;
           });
         });
       });
-      return driver.wait(function() {
+      return driver.wait(function () {
         var elementTest = elementTests.shift();
         elementTests.push(elementTest);
         return elementTest();
-      }, timeout || 5000).then(function() {
+      }, timeout || 5000).then(function () {
         return keyFound;
       });
     },
@@ -203,8 +208,7 @@ module.exports = function drivex(driver, wd) {
      */
     validateText: function (locator, parentWebElement, expectedText) {
       var d = wd.promise.defer();
-      methods.find(locator, parentWebElement,expectedText).getText().then(function (actual){
-        log('validateText : actual : ' + actual + ' expected : ' + expectedText);
+      methods.find(locator, parentWebElement, expectedText).getText().then(function (actual) {
         if (actual === expectedText) {
           d.fulfill(true);
         } else {
@@ -221,10 +225,9 @@ module.exports = function drivex(driver, wd) {
      * @param expected text
      * @returns {WebElementPromise} resolves to true or throw error
      */
-    validateAttributeValue: function (locator, parentWebElement,attribute, expectedText) {
+    validateAttributeValue: function (locator, parentWebElement, attribute, expectedText) {
       var d = wd.promise.defer();
-      methods.find(locator, parentWebElement,expectedText).getAttribute(attribute).then(function (actual) {
-        log('validateAttributeValue : actual : ' + actual + ' expected : ' + expectedText);
+      methods.find(locator, parentWebElement, expectedText).getAttribute(attribute).then(function (actual) {
         if (actual === expectedText) {
           d.fulfill(true);
         } else {
